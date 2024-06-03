@@ -114,6 +114,11 @@ class MemoryGame {
         this.board = board;
         this.flippedCards = [];
         this.matchedCards = [];
+        this.movimiento = 0;
+        this.tiempo = 0;
+        this.timer = null;
+        this.score = 0;
+        this.startedTime = false;
         if (flipDuration < 350 || isNaN(flipDuration) || flipDuration > 3000) {
             flipDuration = 350;
             alert(
@@ -125,13 +130,29 @@ class MemoryGame {
         this.board.reset();
     }
 
+    async start() {
+        if (!this.startedTime){
+            this.startedTime = true;
+            const actTiempo = () => {
+                this.tiempo++;
+                document.getElementById('time').textContent = `Tiempo: ${this.tiempo}`
+                this.timer = setTimeout(actTiempo, 1000);
+            }    
+            actTiempo();
+        }
+    }
+
     #handleCardClick(card) {
         if (this.flippedCards.length < 2 && !card.isFlipped) {
+            if (!this.startedTime){
+                this.start();
+            }
             card.toggleFlip();
             this.flippedCards.push(card);
-
+            this.movimiento++;
+            document.getElementById('moves').textContent = `Movimientos: ${this.movimiento}`
             if (this.flippedCards.length === 2) {
-                setTimeout(() => this.checkForMatch(), this.flipDuration);
+                setTimeout(() => this.checkForMatch(), this.flipDuration / 2);
             }
         }
     }
@@ -155,15 +176,32 @@ class MemoryGame {
 
     }
     handleComplete() {
-        alert("Has completado el juego!");
+        const factorMov = 100;
+        const factorTiempo = 10;
+        this.score = Math.abs(this.tiempo * factorTiempo - this.movimiento * factorMov)
+        alert(`Has completado el juego en ${this.movimiento} movimientos y ${this.tiempo} segundos \n
+        Puntuación: ${this.score}`);
         this.resetGame();
+        this.resetTiempoMov();
     }
 
     resetGame() {
         this.flippedCards = [];
         this.matchedCards = [];
         this.board.flipDownAllCards();
-        setTimeout(() => this.board.reset(), this.flipDuration);
+        clearTimeout(this.timer);
+        setTimeout(() => {
+            this.board.reset();
+            this.startedTime = false;
+        },this.flipDuration);
+        this.resetTiempoMov();
+    }
+
+    resetTiempoMov() {
+        this.tiempo = 0;
+        this.movimiento = 0;
+        document.getElementById('time').textContent = `Tiempo: ${this.tiempo}`;
+        document.getElementById('moves').textContent = `Movimientos: ${this.movimiento}`;
     }
 }
 
